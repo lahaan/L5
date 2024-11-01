@@ -20,6 +20,7 @@ typedef enum FSMState {
     PedWalk,
     PedHurry,
     PedDontWalk,
+    Blink,
     Count
 } FSMState_t;
 
