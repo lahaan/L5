@@ -51,13 +51,15 @@ void PortEInit(void);
 void PortFInit(void);
 
 const FSMStateData_t fsm[Count] = {
-    {0x04, 0x01, 10, {CarGreen, CarYellow, CarGreen, CarYellow}}, // CarGreen state
-    {0x02, 0x01, 2, {CarRed, CarRed, CarRed, CarRed}}, // CarYellow state
-    {0x01, 0x08, 10, {CarRed, CarRed, CarGreen, CarGreen}}, // CarRed state
-    {0x01, 0x08, 10, {PedHurry, PedHurry, PedHurry, PedHurry}}, // PedWalk state
-    {0x01, 0x02, 2, {PedDontWalk, PedDontWalk, PedDontWalk, PedDontWalk}}, // PedHurry state
-    {0x01, 0x01, 10, {CarGreen, CarGreen, CarGreen, CarGreen}} // PedDontWalk state
+    {0x04, 0x02, 10, {CarGreen, CarYellow, CarGreen, CarYellow}}, // Car light go/green state
+    {0x02, 0x01, 4, {CarRed, CarRed, CarRed, CarRed}}, // Car light fast yellow state
+    {0x01, 0x08, 10, {CarRed, CarRed, CarGreen, CarGreen}}, // Car light stop/red state
+    {0x01, 0x08, 10, {PedHurry, PedHurry, PedHurry, PedHurry}}, // Pedestrian green/walk state
+    {0x01, 0x02, 2, {PedDontWalk, PedDontWalk, PedDontWalk, PedDontWalk}}, // Pedestrian hurry fast state
+    {0x01, 0x02, 10, {CarGreen, CarGreen, CarGreen, CarGreen}}, // Pedestrian stop/red state
+    {0x01, 0x00, 5, {CarGreen, CarRed, CarGreen, CarRed}} // New Blink state
 };
+
 
 int main(void) {
 	PortBInit(); //PINS FOR 3 LED OUTPUTS (FOR CARS); PB0 - RED,  PB1 - YELLOW, PB2 - GREEN
@@ -72,6 +74,7 @@ int main(void) {
         GPIO_PORTF_DATA_R = fsm[state].portf_out; //pedestrian light output
         SysTickWait100ms(fsm[state].times); //wait
         input = GPIO_PORTE_DATA_R & 0x03; //inputs
+        SysTickWait100ms(1);
         state = fsm[state].next[input]; //next state
     }
 }
@@ -126,7 +129,7 @@ void PortBInit(void) { // PINS FOR 3 LED OUTPUTS (FOR CARS) - PB0 - RED : PB1 - 
     SYSCTL_RCGC2_R |= SYSCTL_RCGC2_GPIOB;  // 1) Activate clock for Port B
     delay = SYSCTL_RCGC2_R;  // Allow time for clock to start
     GPIO_PORTB_AMSEL_R = 0x00;  // 2) Disable analog functionality on PB0, PB1, PB2
-    GPIO_PORTB_PCTL_R = 0x00000000;  // 3) Configure PB0, PB1, PB2 as GPIO
+    GPIO_PORTB_PCTL_R &= ~0x00000FFF;  // 3) Configure PB0, PB1, PB2 as GPIO.
     GPIO_PORTB_DIR_R |= 0x07;  // 4) Set PB0, PB1, PB2 as outputs
     GPIO_PORTB_AFSEL_R = 0x00;  // 5) Disable alternate functions on PB0, PB1, PB2
     GPIO_PORTB_DEN_R |= 0x07;  // 6) Enable digital I/O on PB0, PB1, PB2
@@ -149,6 +152,7 @@ void PortFInit(void) { // PINS FOR 2 LED OUTPUTS [internal] (FOR PEDESTRIANS) - 
     delay = SYSCTL_RCGC2_R;  // Allow time for clock to start
     GPIO_PORTF_AMSEL_R = 0x00;  // 2) Disable analog functionality on PF1, PF3
     GPIO_PORTF_PCTL_R = 0x00000000;  // 3) Configure PF1, PF3 as GPIO
+    GPIO_PORTF_PUR_R = 0x00;
     GPIO_PORTF_DIR_R |= 0x0A;  // 4) Set PF1, PF3 as outputs
     GPIO_PORTF_AFSEL_R = 0x00;  // 5) Disable alternate functions on PF1, PF3
     GPIO_PORTF_DEN_R |= 0x0A;  // 6) Enable digital I/O on PF1, PF3
