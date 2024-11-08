@@ -21,6 +21,17 @@ typedef enum FSMState {
     PedHurry,
     PedDontWalk,
     Blink,
+    BlinkOff1,
+    BlinkOn1,
+    BlinkOff2,
+    BlinkOn2,
+    BlinkOff3,
+    BlinkOn3,
+    BlinkOff4,
+    BlinkOn4,
+    BlinkOff5,
+    BlinkOn5,
+    FinalState,
     Count
 } FSMState_t;
 
