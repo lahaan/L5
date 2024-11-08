@@ -57,7 +57,16 @@ const FSMStateData_t fsm[Count] = {
     {0x01, 0x08, 10, {PedHurry, PedHurry, PedHurry, PedHurry}}, // Pedestrian green/walk state
     {0x01, 0x02, 2, {PedDontWalk, PedDontWalk, PedDontWalk, PedDontWalk}}, // Pedestrian hurry fast state
     {0x01, 0x02, 10, {CarGreen, CarGreen, CarGreen, CarGreen}}, // Pedestrian stop/red state
-    {0x01, 0x00, 5, {CarGreen, CarRed, CarGreen, CarRed}} // New Blink state
+    {0x01, 0x00, 5, {BlinkOff1, BlinkOff1, BlinkOff1, BlinkOff1}}, // New Blink state
+    {0x00, 0x08, 1, {BlinkOn1, BlinkOn1, BlinkOn1, BlinkOn1}}, // Blink off 1 state
+    {0x08, 0x08, 1, {BlinkOff2, BlinkOff2, BlinkOff2, BlinkOff2}}, // Blink on 1 state
+    {0x00, 0x08, 1, {BlinkOn2, BlinkOn2, BlinkOn2, BlinkOn2}}, // Blink off 2 state
+    {0x08, 0x08, 1, {BlinkOff3, BlinkOff3, BlinkOff3, BlinkOff3}}, // Blink on 2 state
+    {0x00, 0x08, 1, {BlinkOn3, BlinkOn3, BlinkOn3, BlinkOn3}}, // Blink off 3 state
+    {0x08, 0x08, 1, {BlinkOff4, BlinkOff4, BlinkOff4, BlinkOff4}}, // Blink on 3 state
+    {0x00, 0x08, 1, {BlinkOn4, BlinkOn4, BlinkOn4, BlinkOn4}}, // Blink off 4 state
+    {0x08, 0x08, 1, {BlinkOff5, BlinkOff5, BlinkOff5, BlinkOff5}}, // Blink on 4 state
+    {0x00, 0x02, 1, {CarGreen, CarGreen, CarGreen, CarGreen}} // Final state
 };
 
 
@@ -165,4 +174,55 @@ void PortFInit(void) { // PINS FOR 2 LED OUTPUTS [internal] (FOR PEDESTRIANS) - 
     B - 
     ???
     GPIO_PORT?_PUR_R |= 0x??
+
+
+const FSMStateData_t fsm[Count] = {
+    {0x04, 0x02, 10, {CarGreen, CarYellow, CarGreen, CarYellow}}, // Car light go/green state
+    {0x02, 0x01, 4, {CarRed, CarRed, CarRed, CarRed}}, // Car light fast yellow state
+    {0x01, 0x08, 10, {CarRed, CarRed, CarGreen, CarGreen}}, // Car light stop/red state
+    {0x01, 0x08, 10, {PedHurry, PedHurry, PedHurry, PedHurry}}, // Pedestrian green/walk state
+    {0x01, 0x02, 2, {PedDontWalk, PedDontWalk, PedDontWalk, PedDontWalk}}, // Pedestrian hurry fast state
+    {0x01, 0x02, 10, {CarGreen, CarGreen, CarGreen, CarGreen}}, // Pedestrian stop/red state
+    {0x01, 0x00, 5, {CarGreen, CarRed, CarGreen, CarRed}}, // New Blink state
+    {0x00, 0x08, 1, {BlinkOff, BlinkOff, BlinkOff, BlinkOff}}, // Blink off state
+    {0x08, 0x08, 1, {BlinkOn, BlinkOn, BlinkOn, BlinkOn}}, // Blink on state
+    {0x00, 0x02, 1, {CarGreen, CarGreen, CarGreen, CarGreen}} // Final state
+};
+
+int main(void) {
+    PortBInit(); //PINS FOR 3 LED OUTPUTS (FOR CARS); PB0 - RED,  PB1 - YELLOW, PB2 - GREEN
+    PortEInit(); //PINS FOR 2 SW INPUTS (2 SWITCHES); PF0 - CAR "SENSOR", PF1 PEDESTRIAN "SENSOR" 
+    PortFInit(); // PINS FOR 2 LED OUTPUTS [internal] (FOR PEDESTRIANS) - PF1 - RED : PF3 - GREEN
+    SysTickInit();
+    BESGrader();
+    uint32_t input;           // input combination from sensors on PE0-1
+    FSMState_t state = CarGreen; // initial state
+    while (true) {
+        GPIO_PORTB_DATA_R = fsm[state].portb_out; //car light output
+        GPIO_PORTF_DATA_R = fsm[state].portf_out; //pedestrian light output
+        SysTickWait100ms(fsm[state].times); //wait
+        input = GPIO_PORTE_DATA_R & 0x03; //inputs
+        SysTickWait100ms(1);
+        state = fsm[state].next[input]; //next state
+
+        // Handle blinking for pedestrian green light
+        if (state == BlinkOff || state == BlinkOn) {
+            for (int i = 0; i < 3; i++) {
+                GPIO_PORTF_DATA_R &= ~0x08; // Turn off pedestrian green light
+                SysTickWait100ms(1);
+                GPIO_PORTF_DATA_R |= 0x08; // Turn on pedestrian green light
+                SysTickWait100ms(1);
+            }
+            for (int i = 0; i < 2; i++) {
+                GPIO_PORTF_DATA_R &= ~0x08; // Turn off pedestrian green light
+                SysTickWait100ms(1);
+                GPIO_PORTF_DATA_R |= 0x08; // Turn on pedestrian green light
+                SysTickWait100ms(1);
+            }
+            GPIO_PORTF_DATA_R &= ~0x08; // Ensure pedestrian green light is off
+            GPIO_PORTF_DATA_R |= 0x02; // Turn on pedestrian red light
+            state = CarGreen; // Transition to car green state
+        }
+    }
+}
 */
