@@ -1,0 +1,75 @@
+#include "convert.h"
+
+void ConvertDec(uint32_t num, char* str) {
+    if (num > 9999) {
+        str[0] = '*';
+        str[1] = '*';
+        str[2] = '*';
+        str[3] = '*';
+        str[4] = ' ';
+        str[5] = '\0'; // Null-terminate
+        return;
+    }
+
+    int index = 3;
+    str[4] = ' ';
+    str[5] = '\0';
+
+    do {
+        str[index--] = (num % 10) + '0'; // Extract last digit
+        num /= 10;
+    } while (num > 0);
+
+    while (index >= 0) {
+        str[index--] = ' ';
+    }
+}
+
+
+void ConvertDistance(uint32_t num, char* str) {
+    if (num > 9999) {
+        str[0] = '*';
+        str[1] = '.';
+        str[2] = '*';
+        str[3] = '*';
+        str[4] = '*';
+        str[5] = ' ';
+        str[6] = 'c';
+        str[7] = 'm';
+        str[8] = '\0';
+        return;
+    }
+
+    str[7] = 'm';			   //        m
+    str[6] = 'c';			   //       cm
+    str[5] = ' ';
+    str[4] = (num % 10) + '0'; //     x cm
+    num /= 10;
+    str[3] = (num % 10) + '0'; //    xx cm
+    num /= 10;
+    str[2] = (num % 10) + '0'; //   xxx cm
+    num /= 10;
+    str[1] = '.';			   //  .xxx
+    str[0] = num + '0';        // x.xxx cm
+    str[8] = '\0';             // Null-terminate
+}
+
+int main() {
+    char str[10];
+    
+    // Test ConvertDec
+    ConvertDec(10000, str);
+    printf("ConvertDec: %s\n", str); // Output: "ConvertDec:  123 "
+    
+    ConvertDec(102, str);
+    printf("ConvertDec: %s\n", str); // Output: "ConvertDec: **** "
+    
+    // Test ConvertDistance
+    ConvertDistance(10000, str);
+    printf("ConvertDistance: %s\n", str); // Output: "ConvertDistance: 1.234 cm"
+    
+    ConvertDistance(102, str);
+    printf("ConvertDistance: %s\n", str); // Output: "ConvertDistance: *.*** cm"
+
+    return 0;
+}
